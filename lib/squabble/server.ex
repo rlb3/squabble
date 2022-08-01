@@ -78,9 +78,12 @@ defmodule Squabble.Server do
   Try to elect yourself as the leader
   """
   def start_election(state, term) do
-    Logger.debug(fn ->
-      "Starting an election for term #{term}, announcing candidacy"
-    end, type: :squabble)
+    Logger.debug(
+      fn ->
+        "Starting an election for term #{term}, announcing candidacy"
+      end,
+      type: :squabble
+    )
 
     case check_term_newer(state, term) do
       {:ok, :newer} ->
@@ -101,16 +104,22 @@ defmodule Squabble.Server do
         end
 
       {:error, :same} ->
-        Logger.debug(fn ->
-          "Someone already won this round, not starting"
-        end, type: :squabble)
+        Logger.debug(
+          fn ->
+            "Someone already won this round, not starting"
+          end,
+          type: :squabble
+        )
 
         {:ok, state}
 
       {:error, :older} ->
-        Logger.debug(fn ->
-          "This term has already completed, not starting"
-        end, type: :squabble)
+        Logger.debug(
+          fn ->
+            "This term has already completed, not starting"
+          end,
+          type: :squabble
+        )
 
         {:ok, state}
     end
@@ -120,9 +129,12 @@ defmodule Squabble.Server do
   Vote for the leader
   """
   def vote_leader(state, pid, term) do
-    Logger.debug(fn ->
-      "Received ballot for term #{term}, from #{inspect(pid)}, voting"
-    end, type: :squabble)
+    Logger.debug(
+      fn ->
+        "Received ballot for term #{term}, from #{inspect(pid)}, voting"
+      end,
+      type: :squabble
+    )
 
     with {:ok, :newer} <- check_term_newer(state, term),
          {:ok, :not_voted} <- check_voted(state) do
@@ -130,9 +142,12 @@ defmodule Squabble.Server do
       {:ok, %{state | voted_for: pid, highest_seen_term: term}}
     else
       {:error, :same} ->
-        Logger.debug(fn ->
-          "Received a vote for the same term"
-        end, type: :squabble)
+        Logger.debug(
+          fn ->
+            "Received a vote for the same term"
+          end,
+          type: :squabble
+        )
 
         {:ok, state}
 
@@ -145,9 +160,12 @@ defmodule Squabble.Server do
   A vote came in from the cluster
   """
   def vote_received(state, pid, term) do
-    Logger.debug(fn ->
-      "Received a vote for leader for term #{term}, from #{inspect(pid)}"
-    end, type: :squabble)
+    Logger.debug(
+      fn ->
+        "Received a vote for leader for term #{term}, from #{inspect(pid)}"
+      end,
+      type: :squabble
+    )
 
     with {:ok, :newer} <- check_term_newer(state, term),
          {:ok, state} <- append_vote(state, pid),
@@ -181,9 +199,12 @@ defmodule Squabble.Server do
   def set_leader(state, leader_pid, leader_node, term) do
     with :ok <- check_leader_different(state, leader_pid, leader_node, term),
          {:ok, :newer} <- check_term_newer(state, term) do
-      Logger.debug(fn ->
-        "Setting leader for term #{term} as #{inspect(leader_pid)}"
-      end, type: :squabble)
+      Logger.debug(
+        fn ->
+          "Setting leader for term #{term} as #{inspect(leader_pid)}"
+        end,
+        type: :squabble
+      )
 
       :ets.insert(@key, {:is_leader?, false})
 
@@ -200,9 +221,12 @@ defmodule Squabble.Server do
       {:ok, state}
     else
       {:error, :same} ->
-        Logger.debug(fn ->
-          "Another node has the same term and is a leader, starting a new term"
-        end, type: :squabble)
+        Logger.debug(
+          fn ->
+            "Another node has the same term and is a leader, starting a new term"
+          end,
+          type: :squabble
+        )
 
         Squabble.start_election(state.term + 1)
 
@@ -230,9 +254,12 @@ defmodule Squabble.Server do
   def assert_leader(state) do
     case state.state do
       "leader" ->
-        Logger.debug(fn ->
-          "A new node came online, asserting leadership"
-        end, type: :squabble)
+        Logger.debug(
+          fn ->
+            "A new node came online, asserting leadership"
+          end,
+          type: :squabble
+        )
 
         PG.broadcast([others: true], fn pid ->
           Squabble.new_leader(pid, state.term)
@@ -333,9 +360,12 @@ defmodule Squabble.Server do
   """
   @spec voted_leader(State.t(), integer()) :: {:ok, State.t()}
   def voted_leader(state, term) do
-    Logger.debug(fn ->
-      "Won the election for term #{term}"
-    end, type: :squabble)
+    Logger.debug(
+      fn ->
+        "Won the election for term #{term}"
+      end,
+      type: :squabble
+    )
 
     {:ok, state} = set_leader(state, self(), node(), term)
 
